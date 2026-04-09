@@ -20,6 +20,8 @@ import databaseConfig from './config/database.config';
         database: configService.get<string>('database.database'),
         autoLoadEntities: true,
         synchronize: false,
+        migrations: [__dirname + '/migrations/*.{ts,js}'],
+        migrationsRun: false,
       }),
     }),
   ],
