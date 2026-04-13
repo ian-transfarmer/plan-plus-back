@@ -11,6 +11,12 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async findById(id: string) {
+    return await this.userRepository.findOne({
+      where: { id },
+    });
+  }
+
   async findByEmail(email: string) {
     return await this.userRepository.findOne({
       where: { email, status: USER_STATUS.ACTIVE },
