@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../../common/entity/base.entity';
 
@@ -10,6 +11,12 @@ export enum PROVIDER {
 export enum ROLE {
   USER = 'user',
   ADMIN = 'admin',
+}
+
+export enum USER_STATUS {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
 }
 
 @Entity('tb_user')
@@ -26,15 +33,17 @@ export class User extends BaseEntity {
   @Column({ length: 255 })
   email: string;
 
-  @Column({ length: 255, nullable: true, select: false })
+  @Exclude()
+  @Column({ length: 255, nullable: true })
   password: string;
 
   @Column({ default: PROVIDER.LOCAL })
   provider: PROVIDER;
 
-  @Column({ length: 255, nullable: true, select: false })
+  @Exclude()
+  @Column({ length: 255, nullable: true })
   providerId: string;
 
-  @Column({ default: true })
-  isActive: boolean;
+  @Column({ length: 20, default: USER_STATUS.ACTIVE })
+  status: USER_STATUS;
 }
