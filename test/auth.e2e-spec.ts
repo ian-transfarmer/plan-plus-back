@@ -81,4 +81,40 @@ describe('Auth (e2e)', () => {
         .expect(400);
     });
   });
+
+  describe('POST /auth/login', () => {
+    const signupDto = {
+      name: '홍길동',
+      email: 'login@example.com',
+      password: 'password123',
+    };
+
+    beforeEach(async () => {
+      await request(app.getHttpServer()).post('/auth/signup').send(signupDto);
+    });
+
+    it('로그인 성공 시 accessToken 반환 (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: signupDto.email, password: signupDto.password })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('refreshToken');
+    });
+
+    it('존재하지 않는 이메일이면 401', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'none@example.com', password: 'password123' })
+        .expect(401);
+    });
+
+    it('비밀번호가 틀리면 401', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: signupDto.email, password: 'wrongpassword' })
+        .expect(401);
+    });
+  });
 });
