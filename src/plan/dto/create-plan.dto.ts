@@ -14,11 +14,11 @@ export class CreatePlanDto {
   @IsString()
   description?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  startTime?: Date;
+  startTime: Date;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  endTime?: Date;
+  endTime: Date;
 }

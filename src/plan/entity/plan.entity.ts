@@ -22,11 +22,11 @@ export class Plan extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  startTime?: Date;
+  @Column({ type: 'timestamptz' })
+  startTime: Date;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  endTime?: Date;
+  @Column({ type: 'timestamptz' })
+  endTime: Date;
 
   @ManyToOne(() => User, (user) => user.id, {
     createForeignKeyConstraints: false,

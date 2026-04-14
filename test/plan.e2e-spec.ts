@@ -89,4 +89,49 @@ describe('Plan (e2e)', () => {
         .expect(400);
     });
   });
+
+  describe('GET /plan', () => {
+    beforeEach(async () => {
+      await request(app.getHttpServer())
+        .post('/plan')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          title: '7월 플랜',
+          startTime: '2024-07-15T10:00:00.000Z',
+          endTime: '2024-07-15T11:00:00.000Z',
+        });
+
+      await request(app.getHttpServer())
+        .post('/plan')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          title: '8월 플랜',
+          startTime: '2024-08-10T10:00:00.000Z',
+          endTime: '2024-08-10T11:00:00.000Z',
+        });
+    });
+
+    it('기간으로 플랜 목록 조회 (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/plan')
+        .query({ startDate: '2024-07-01', endDate: '2024-07-31' })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBe(1);
+      expect(response.body[0].title).toBe('7월 플랜');
+    });
+
+    it('기간 없이 조회하면 400', async () => {
+      await request(app.getHttpServer())
+        .get('/plan')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+
+    it('토큰 없으면 401', async () => {
+      await request(app.getHttpServer()).get('/plan').expect(401);
+    });
+  });
 });
