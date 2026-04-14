@@ -24,7 +24,7 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ default: ROLE.USER })
+  @Column({ length: 20, default: ROLE.USER })
   role: ROLE;
 
   @Column({ length: 50 })
@@ -37,7 +37,7 @@ export class User extends BaseEntity {
   @Column({ length: 255, nullable: true })
   password: string;
 
-  @Column({ default: PROVIDER.LOCAL })
+  @Column({ length: 20, default: PROVIDER.LOCAL })
   provider: PROVIDER;
 
   @Exclude()
