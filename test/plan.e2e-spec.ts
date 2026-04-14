@@ -123,6 +123,29 @@ describe('Plan (e2e)', () => {
       expect(response.body[0].title).toBe('7월 플랜');
     });
 
+    it('기간 당일에도 포함되는지 확인', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/plan')
+        .query({ startDate: '2024-08-10', endDate: '2024-08-10' })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBe(1);
+      expect(response.body[0].title).toBe('8월 플랜');
+    });
+
+    it('기간에 해당하는 플랜 없으면 빈 배열', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/plan')
+        .query({ startDate: '2024-09-01', endDate: '2024-09-30' })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBe(0);
+    });
+
     it('기간 없이 조회하면 400', async () => {
       await request(app.getHttpServer())
         .get('/plan')
