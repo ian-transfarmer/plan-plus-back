@@ -48,6 +48,22 @@ export class AuthService {
     };
   }
 
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const user = await this.userService.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+      }
+      const newPayload = { sub: user.id, email: user.email, role: user.role };
+      return {
+        accessToken: this.issueToken('access', newPayload),
+      };
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
+    }
+  }
+
   private issueToken(
     type: 'access' | 'refresh',
     data: { sub: string; email: string; role: string },

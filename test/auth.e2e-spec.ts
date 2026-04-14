@@ -117,4 +117,40 @@ describe('Auth (e2e)', () => {
         .expect(401);
     });
   });
+
+  describe('POST /auth/refresh', () => {
+    const signupDto = {
+      name: '홍길동',
+      email: 'refresh@example.com',
+      password: 'password123',
+    };
+
+    let refreshToken: string;
+
+    beforeEach(async () => {
+      await request(app.getHttpServer()).post('/auth/signup').send(signupDto);
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: signupDto.email, password: signupDto.password });
+
+      refreshToken = loginResponse.body.refreshToken;
+    });
+
+    it('리프레시 토큰으로 새 토큰 발급 (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refreshToken })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('accessToken');
+    });
+
+    it('유효하지 않은 리프레시 토큰이면 401', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refreshToken: 'invalid-token' })
+        .expect(401);
+    });
+  });
 });
