@@ -1,13 +1,8 @@
-import {
-  ClassSerializerInterceptor,
-  INestApplication,
-  ValidationPipe,
-} from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { AppModule } from '../src/app.module';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Reflector } from '@nestjs/core';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
+import { signupAndLogin } from './utils/auth';
+import { createTestApp } from './utils/setup';
 
 describe('Plan (e2e)', () => {
   let app: INestApplication;
@@ -21,28 +16,12 @@ describe('Plan (e2e)', () => {
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-    );
-    await app.init();
-
+    app = await createTestApp();
     dataSource = app.get(DataSource);
   });
 
   beforeEach(async () => {
-    await request(app.getHttpServer()).post('/auth/signup').send(signupDto);
-
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ email: signupDto.email, password: signupDto.password });
-
-    accessToken = loginResponse.body.accessToken;
+    accessToken = await signupAndLogin(app, signupDto);
   });
 
   afterEach(async () => {

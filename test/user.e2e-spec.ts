@@ -1,30 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  ClassSerializerInterceptor,
-  INestApplication,
-  ValidationPipe,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
+import { signupAndLogin } from './utils/auth';
+import { createTestApp } from './utils/setup';
 
 describe('User (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-    );
-    await app.init();
-
+    app = await createTestApp();
     dataSource = app.get(DataSource);
   });
 
@@ -47,13 +32,7 @@ describe('User (e2e)', () => {
     let accessToken: string;
 
     beforeEach(async () => {
-      await request(app.getHttpServer()).post('/auth/signup').send(signupDto);
-
-      const loginResponse = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({ email: signupDto.email, password: signupDto.password });
-
-      accessToken = loginResponse.body.accessToken;
+      accessToken = await signupAndLogin(app, signupDto);
     });
 
     it('자기 정보 조회 성공 (200)', async () => {
