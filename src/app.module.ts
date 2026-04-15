@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { RoleGuard } from './auth/guard/role.guard';
 import { PlanModule } from './plan/plan.module';
+import { TodoModule } from './todo/todo.module';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -37,6 +38,7 @@ import databaseConfig from './config/database.config';
     UserModule,
     AuthModule,
     PlanModule,
+    TodoModule,
   ],
   controllers: [],
   providers: [
