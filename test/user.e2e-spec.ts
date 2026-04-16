@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { signupAndLogin } from './utils/auth';
-import { createTestApp } from './utils/setup';
+import { cleanupDatabase, createTestApp } from './utils/setup';
 
 describe('User (e2e)', () => {
   let app: INestApplication;
@@ -14,7 +14,7 @@ describe('User (e2e)', () => {
   });
 
   afterEach(async () => {
-    await dataSource.query('DELETE FROM tb_user');
+    await cleanupDatabase(dataSource);
   });
 
   afterAll(async () => {
@@ -41,20 +41,29 @@ describe('User (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
+      expect(response.body.id).toEqual(expect.any(String));
       expect(response.body.email).toBe(signupDto.email);
       expect(response.body.name).toBe(signupDto.name);
       expect(response.body.password).toBeUndefined();
     });
 
     it('토큰 없으면 401', async () => {
-      await request(app.getHttpServer()).get('/user/me').expect(401);
+      const response = await request(app.getHttpServer())
+        .get('/user/me')
+        .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
 
     it('잘못된 토큰이면 401', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/user/me')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
   });
 });
