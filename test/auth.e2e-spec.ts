@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp } from './utils/setup';
+import { cleanupDatabase, createTestApp } from './utils/setup';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
@@ -13,7 +13,7 @@ describe('Auth (e2e)', () => {
   });
 
   afterEach(async () => {
-    await dataSource.query('DELETE FROM tb_user');
+    await cleanupDatabase(dataSource);
   });
 
   afterAll(async () => {
@@ -34,6 +34,7 @@ describe('Auth (e2e)', () => {
         .send(signupDto)
         .expect(201);
 
+      expect(response.body.id).toEqual(expect.any(String));
       expect(response.body.email).toBe(signupDto.email);
       expect(response.body.name).toBe(signupDto.name);
       expect(response.body.password).toBeUndefined();
@@ -45,24 +46,33 @@ describe('Auth (e2e)', () => {
         .send(signupDto)
         .expect(201);
 
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/signup')
         .send(signupDto)
         .expect(409);
+
+      expect(response.body.statusCode).toBe(409);
+      expect(response.body.message).toBeDefined();
     });
 
     it('이메일 형식이 잘못되면 400', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/signup')
         .send({ ...signupDto, email: 'invalid-email' })
         .expect(400);
+
+      expect(response.body.statusCode).toBe(400);
+      expect(response.body.message).toEqual(expect.any(Array));
     });
 
     it('필수 필드 누락 시 400', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/signup')
         .send({ email: 'test@example.com' })
         .expect(400);
+
+      expect(response.body.statusCode).toBe(400);
+      expect(response.body.message).toEqual(expect.any(Array));
     });
   });
 
@@ -83,22 +93,28 @@ describe('Auth (e2e)', () => {
         .send({ email: signupDto.email, password: signupDto.password })
         .expect(200);
 
-      expect(response.body).toHaveProperty('accessToken');
-      expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body.accessToken).toEqual(expect.any(String));
+      expect(response.body.refreshToken).toEqual(expect.any(String));
     });
 
     it('존재하지 않는 이메일이면 401', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({ email: 'none@example.com', password: 'password123' })
         .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
 
     it('비밀번호가 틀리면 401', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({ email: signupDto.email, password: 'wrongpassword' })
         .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
   });
 
@@ -127,14 +143,17 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken })
         .expect(200);
 
-      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body.accessToken).toEqual(expect.any(String));
     });
 
     it('유효하지 않은 리프레시 토큰이면 401', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
   });
 });

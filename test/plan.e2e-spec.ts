@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { signupAndLogin } from './utils/auth';
-import { createTestApp } from './utils/setup';
+import { cleanupDatabase, createTestApp } from './utils/setup';
 
 describe('Plan (e2e)', () => {
   let app: INestApplication;
@@ -25,8 +25,7 @@ describe('Plan (e2e)', () => {
   });
 
   afterEach(async () => {
-    await dataSource.query('DELETE FROM tb_plan');
-    await dataSource.query('DELETE FROM tb_user');
+    await cleanupDatabase(dataSource);
   });
 
   afterAll(async () => {
@@ -49,23 +48,32 @@ describe('Plan (e2e)', () => {
         .send(createPlanDto)
         .expect(201);
 
+      expect(response.body.id).toEqual(expect.any(String));
       expect(response.body.title).toBe(createPlanDto.title);
       expect(response.body.description).toBe(createPlanDto.description);
+      expect(response.body.startTime).toBeDefined();
+      expect(response.body.endTime).toBeDefined();
     });
 
     it('토큰 없으면 401', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/plan')
         .send(createPlanDto)
         .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
 
     it('필수 필드 누락 시 400', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/plan')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ description: '설명만' })
         .expect(400);
+
+      expect(response.body.statusCode).toBe(400);
+      expect(response.body.message).toEqual(expect.any(Array));
     });
   });
 
@@ -126,14 +134,22 @@ describe('Plan (e2e)', () => {
     });
 
     it('기간 없이 조회하면 400', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/plan')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(400);
+
+      expect(response.body.statusCode).toBe(400);
+      expect(response.body.message).toEqual(expect.any(Array));
     });
 
     it('토큰 없으면 401', async () => {
-      await request(app.getHttpServer()).get('/plan').expect(401);
+      const response = await request(app.getHttpServer())
+        .get('/plan')
+        .expect(401);
+
+      expect(response.body.statusCode).toBe(401);
+      expect(response.body.message).toBeDefined();
     });
   });
 });
